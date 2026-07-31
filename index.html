@@ -104,7 +104,6 @@
     <div class="channel-list" id="channelContainer"></div>
 
     <div class="player-overlay" id="playerOverlay">
-        <button class="back-btn" onclick="closePlayer()">[x] Back</button>
         <video id="videoPlayer" controls autoplay playsinline></video>
     </div>
 
@@ -113,14 +112,16 @@
 #EXTM3U
 #EXTINF:-1 tvg-name="Sample 1" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/kappa-tv-in.png", Kappa TV
 https://cdn-3.pishow.tv/live/1123/master.m3u8
-#EXTINF:-1 tvg-name="Sample 2" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/dd-sports-in.png", DD Sports
+#EXTINF:-1 tvg-name="Sample 2", DD Sports
 https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/b17adfe543354fdd8d189b110617cddd/index.m3u8
 #EXTINF:-1 tvg-name="Sample 2" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/mazhavil-manorama-in.png", Mazhavi Manorama HD
 https://cdn-7.pishow.tv/live/1129/master.m3u8  
 #EXTINF:-1 tvg-name="Sample 2" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/kairali-we-in.png", Kairali WE
 https://cdn-3.pishow.tv/live/1530/master.m3u8
-#EXTINF:-1 tvg-name="Sample 2" DD National
+#EXTINF:-1 tvg-name="Sample 2", DD National
 https://cdn-1.pishow.tv/live/11/master.m3u8
+#EXTINF:-1 tvg-name="Sample 2", 9XM
+https://9xjio.wiseplayout.com/9XM/master.m3u8
 `;
 
         const videoPlayer = document.getElementById('videoPlayer');
