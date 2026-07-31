@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=240, height=320, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=240, height=320, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nokia IPTV</title>
     <style>
         * {
@@ -15,10 +15,14 @@
             font-size: 11px;
         }
 
-        body {
+        html, body {
             width: 240px;
             height: 320px;
             overflow: hidden;
+            position: relative;
+        }
+
+        body {
             display: flex;
             flex-direction: column;
         }
@@ -73,35 +77,36 @@
 
         .player-overlay {
             display: none;
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 240px;
             height: 320px;
             background: #000;
-            z-index: 9999;
+            z-index: 99999;
+            flex-direction: column;
         }
 
         .player-overlay.active {
             display: flex;
-            flex-direction: column;
         }
 
         .control-bar {
-            height: 30px;
+            height: 32px;
             background: #111;
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0 4px;
             border-bottom: 1px solid #333;
+            flex-shrink: 0;
         }
 
         .nav-btn {
             background: #222;
             color: #00d2ff;
             border: 1px solid #444;
-            padding: 3px 8px;
+            padding: 4px 6px;
             font-size: 10px;
             font-weight: bold;
             border-radius: 3px;
@@ -111,11 +116,22 @@
         .nav-btn:focus, .nav-btn:active {
             background: #0055ff;
             color: #fff;
+            border-color: #00d2ff;
+            outline: none;
+        }
+
+        .video-container {
+            width: 240px;
+            height: 288px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
         }
 
         video {
-            width: 240px;
-            height: 290px;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
             background-color: #000;
         }
@@ -134,7 +150,9 @@
                 <button class="nav-btn" id="btnNext" onclick="playNextChannel()">Next &gt;</button>
             </div>
         </div>
-        <video id="videoPlayer" controls autoplay playsinline></video>
+        <div class="video-container">
+            <video id="videoPlayer" playsinline webkit-playsinline autoplay></video>
+        </div>
     </div>
 
     <script>
@@ -222,8 +240,10 @@ https://asianetnews.vgcdn.net/vglive-sk-917600/playlist.m3u8
             videoPlayer.load();
             videoPlayer.play().catch(e => console.log(e));
 
-            // Focus on next button so D-pad can cycle easily
-            document.getElementById('btnNext').focus();
+            // Snap keyboard focus to Next button so D-Pad Center/OK immediately triggers Next
+            setTimeout(function() {
+                document.getElementById('btnNext').focus();
+            }, 100);
         }
 
         function playNextChannel() {
@@ -247,15 +267,16 @@ https://asianetnews.vgcdn.net/vglive-sk-917600/playlist.m3u8
             if (currentBtn) currentBtn.focus();
         }
 
-        // Global Key Fallback
-        document.addEventListener('keydown', function(e) {
+        // Global Key Fallback for Nokia Hardware Keys
+        window.addEventListener('keydown', function(e) {
             if (!playerOverlay.classList.contains('active')) return;
 
+            // Backspace / Escape -> Close Player
             if (e.key === "Backspace" || e.key === "Escape" || e.keyCode === 8) {
                 closePlayer();
                 e.preventDefault();
             }
-        });
+        }, true);
 
         parsedChannels = parseM3U(embeddedM3U);
         renderPlaylist(parsedChannels);
