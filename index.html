@@ -1,4 +1,4 @@
-i<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -80,22 +80,44 @@ i<!DOCTYPE html>
             height: 320px;
             background: #000;
             z-index: 9999;
-            outline: none;
         }
 
         .player-overlay.active {
             display: flex;
             flex-direction: column;
-            justify-content: center;
+        }
+
+        .control-bar {
+            height: 30px;
+            background: #111;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
+            padding: 0 4px;
+            border-bottom: 1px solid #333;
+        }
+
+        .nav-btn {
+            background: #222;
+            color: #00d2ff;
+            border: 1px solid #444;
+            padding: 3px 8px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .nav-btn:focus, .nav-btn:active {
+            background: #0055ff;
+            color: #fff;
         }
 
         video {
             width: 240px;
-            height: 320px;
+            height: 290px;
             object-fit: contain;
             background-color: #000;
-            pointer-events: none;
         }
     </style>
 </head>
@@ -104,8 +126,15 @@ i<!DOCTYPE html>
     <div class="header">📺 IPTV Channels</div>
     <div class="channel-list" id="channelContainer"></div>
 
-    <div class="player-overlay" id="playerOverlay" tabindex="0">
-        <video id="videoPlayer" autoplay playsinline></video>
+    <div class="player-overlay" id="playerOverlay">
+        <div class="control-bar">
+            <button class="nav-btn" id="btnBack" onclick="closePlayer()">[X] Exit</button>
+            <div>
+                <button class="nav-btn" id="btnPrev" onclick="playPrevChannel()">&lt; Prev</button>
+                <button class="nav-btn" id="btnNext" onclick="playNextChannel()">Next &gt;</button>
+            </div>
+        </div>
+        <video id="videoPlayer" controls autoplay playsinline></video>
     </div>
 
     <script>
@@ -188,11 +217,13 @@ https://asianetnews.vgcdn.net/vglive-sk-917600/playlist.m3u8
             const channel = parsedChannels[currentChannelIndex];
 
             playerOverlay.classList.add('active');
-            playerOverlay.focus(); // Force keyboard focus onto overlay container
 
             videoPlayer.src = channel.url;
             videoPlayer.load();
             videoPlayer.play().catch(e => console.log(e));
+
+            // Focus on next button so D-pad can cycle easily
+            document.getElementById('btnNext').focus();
         }
 
         function playNextChannel() {
@@ -212,43 +243,19 @@ https://asianetnews.vgcdn.net/vglive-sk-917600/playlist.m3u8
             videoPlayer.src = "";
             playerOverlay.classList.remove('active');
 
-            // Refocus current channel button in list
             const currentBtn = channelContainer.children[currentChannelIndex];
             if (currentBtn) currentBtn.focus();
         }
 
-        // Keyboard handler supporting D-Pad + Number Keypad
-        window.addEventListener('keydown', function(e) {
+        // Global Key Fallback
+        document.addEventListener('keydown', function(e) {
             if (!playerOverlay.classList.contains('active')) return;
 
-            const key = e.key;
-            const code = e.keyCode;
-
-            // RIGHT ARROW OR KEY '6' -> NEXT CHANNEL
-            if (key === "ArrowRight" || code === 39 || key === "6" || code === 54) {
-                playNextChannel();
-                e.preventDefault();
-            }
-            // LEFT ARROW OR KEY '4' -> PREVIOUS CHANNEL
-            else if (key === "ArrowLeft" || code === 37 || key === "4" || code === 52) {
-                playPrevChannel();
-                e.preventDefault();
-            }
-            // OK / CENTER / ENTER OR KEY '5' -> PLAY/PAUSE
-            else if (key === "Enter" || code === 13 || key === "5" || code === 53) {
-                if (videoPlayer.paused) {
-                    videoPlayer.play();
-                } else {
-                    videoPlayer.pause();
-                }
-                e.preventDefault();
-            }
-            // BACKSPACE / ESCAPE OR KEY '0' -> EXIT
-            else if (key === "Backspace" || key === "Escape" || code === 8 || key === "0" || code === 48) {
+            if (e.key === "Backspace" || e.key === "Escape" || e.keyCode === 8) {
                 closePlayer();
                 e.preventDefault();
             }
-        }, true);
+        });
 
         parsedChannels = parseM3U(embeddedM3U);
         renderPlaylist(parsedChannels);
