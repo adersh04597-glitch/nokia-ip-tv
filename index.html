@@ -1,4 +1,4 @@
-<!<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -76,8 +76,8 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 320px;
-            height: 240px;
+            width: 240px;
+            height: 320px;
             background: #000;
             z-index: 9999;
         }
@@ -90,23 +90,10 @@
         }
 
         video {
-            width: 320px;
-            height: 240px;
+            width: 240px;
+            height: 320px;
             object-fit: contain;
             background-color: #000;
-        }
-        
-        .back-btn {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            background: rgba(0, 0, 0, 0.7);
-            color: #fff;
-            border: 1px solid #444;
-            padding: 2px 6px;
-            font-size: 9px;
-            border-radius: 3px;
-            z-index: 10000;
         }
     </style>
 </head>
@@ -114,10 +101,8 @@
 
     <div class="header">📺 IPTV Channels</div>
     <div class="channel-list" id="channelContainer"></div>
-    <button class="back-btn" onclick="closePlayer()"></button>
 
     <div class="player-overlay" id="playerOverlay">
-         <button class="back-btn" onclick="closePlayer()">[×] Back</button>
         <video id="videoPlayer" controls autoplay playsinline></video>
     </div>
 
@@ -126,21 +111,24 @@
 #EXTM3U
 #EXTINF:-1 tvg-name="Sample 1" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/kappa-tv-in.png", Kappa TV
 https://cdn-3.pishow.tv/live/1123/master.m3u8
-#EXTINF:-1 tvg-name="Sample 2", DD Sports
+#EXTINF:-1 tvg-name="Sample 2" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/dd-sports-in.png", DD Sports
 https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/b17adfe543354fdd8d189b110617cddd/index.m3u8
 #EXTINF:-1 tvg-name="Sample 2" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/mazhavil-manorama-in.png", Mazhavi Manorama HD
 https://cdn-7.pishow.tv/live/1129/master.m3u8  
 #EXTINF:-1 tvg-name="Sample 2" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/kairali-we-in.png", Kairali WE
 https://cdn-3.pishow.tv/live/1530/master.m3u8
-#EXTINF:-1 tvg-name="Sample 2", DD National
+#EXTINF:-1 tvg-name="Sample 2" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/dd-national-in.png", DD National
 https://cdn-1.pishow.tv/live/11/master.m3u8
-#EXTINF:-1 tvg-name="Sample 2", 9XM
-https://9xjio.wiseplayout.com/9XM/master.m3u8
+#EXTINF:-1 tvg-name="Sample 2" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/asianet-news-in.png", Asianet News
+https://asianetnews.vgcdn.net/vglive-sk-917600/playlist.m3u8
 `;
 
         const videoPlayer = document.getElementById('videoPlayer');
         const playerOverlay = document.getElementById('playerOverlay');
         const channelContainer = document.getElementById('channelContainer');
+
+        let parsedChannels = [];
+        let currentChannelIndex = 0;
 
         function parseM3U(data) {
             const lines = data.split('\n');
@@ -181,7 +169,7 @@ https://9xjio.wiseplayout.com/9XM/master.m3u8
                 btn.innerHTML = `${imgHtml}<span>${index + 1}. ${channel.name}</span>`;
 
                 btn.onclick = function() {
-                    playChannel(channel.url);
+                    playChannel(index);
                 };
 
                 channelContainer.appendChild(btn);
@@ -191,18 +179,33 @@ https://9xjio.wiseplayout.com/9XM/master.m3u8
             if (firstItem) firstItem.focus();
         }
 
-        function playChannel(url) {
+        function playChannel(index) {
+            if (index < 0 || index >= parsedChannels.length) return;
+
+            currentChannelIndex = index;
+            const channel = parsedChannels[currentChannelIndex];
+
             playerOverlay.classList.add('active');
-            videoPlayer.src = url;
+            videoPlayer.src = channel.url;
             videoPlayer.load();
 
-            if (videoPlayer.requestFullscreen) {
-                videoPlayer.requestFullscreen().catch(e => console.log(e));
-            } else if (videoPlayer.webkitRequestFullscreen) {
-                videoPlayer.webkitRequestFullscreen();
-            }
-
             videoPlayer.play().catch(e => console.log(e));
+        }
+
+        function playNextChannel() {
+            let nextIndex = currentChannelIndex + 1;
+            if (nextIndex >= parsedChannels.length) {
+                nextIndex = 0; // Loop back to first channel
+            }
+            playChannel(nextIndex);
+        }
+
+        function playPrevChannel() {
+            let prevIndex = currentChannelIndex - 1;
+            if (prevIndex < 0) {
+                prevIndex = parsedChannels.length - 1; // Loop to last channel
+            }
+            playChannel(prevIndex);
         }
 
         function closePlayer() {
@@ -215,16 +218,37 @@ https://9xjio.wiseplayout.com/9XM/master.m3u8
             }
         }
 
+        // Key Listener for hidden key controls
         document.addEventListener('keydown', function(e) {
-            if (e.key === "Backspace" || e.key === "Escape" || e.keyCode === 8) {
-                if (playerOverlay.classList.contains('active')) {
+            if (playerOverlay.classList.contains('active')) {
+                // Right Arrow Key -> Next Channel
+                if (e.key === "ArrowRight" || e.keyCode === 39) {
+                    playNextChannel();
+                    e.preventDefault();
+                }
+                // Left Arrow Key -> Previous Channel
+                else if (e.key === "ArrowLeft" || e.keyCode === 37) {
+                    playPrevChannel();
+                    e.preventDefault();
+                }
+                // Backspace or Escape -> Close Video Player
+                else if (e.key === "Backspace" || e.key === "Escape" || e.keyCode === 8) {
                     closePlayer();
+                    e.preventDefault();
+                }
+                // Center / OK / Enter Key -> Toggle Play / Pause
+                else if (e.key === "Enter" || e.keyCode === 13) {
+                    if (videoPlayer.paused) {
+                        videoPlayer.play();
+                    } else {
+                        videoPlayer.pause();
+                    }
                     e.preventDefault();
                 }
             }
         });
 
-        const parsedChannels = parseM3U(embeddedM3U);
+        parsedChannels = parseM3U(embeddedM3U);
         renderPlaylist(parsedChannels);
     </script>
 </body>
