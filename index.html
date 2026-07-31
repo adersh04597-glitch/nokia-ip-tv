@@ -84,54 +84,15 @@
             height: 320px;
             background: #000;
             z-index: 99999;
-            flex-direction: column;
         }
 
         .player-overlay.active {
-            display: flex;
-        }
-
-        .control-bar {
-            height: 32px;
-            background: #111;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 4px;
-            border-bottom: 1px solid #333;
-            flex-shrink: 0;
-        }
-
-        .nav-btn {
-            background: #222;
-            color: #00d2ff;
-            border: 1px solid #444;
-            padding: 4px 6px;
-            font-size: 10px;
-            font-weight: bold;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-
-        .nav-btn:focus, .nav-btn:active {
-            background: #0055ff;
-            color: #fff;
-            border-color: #00d2ff;
-            outline: none;
-        }
-
-        .video-container {
-            width: 240px;
-            height: 288px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #000;
+            display: block;
         }
 
         video {
-            width: 100%;
-            height: 100%;
+            width: 240px;
+            height: 320px;
             object-fit: contain;
             background-color: #000;
         }
@@ -143,16 +104,7 @@
     <div class="channel-list" id="channelContainer"></div>
 
     <div class="player-overlay" id="playerOverlay">
-        <div class="control-bar">
-            <button class="nav-btn" id="btnBack" onclick="closePlayer()">[X] Exit</button>
-            <div>
-                <button class="nav-btn" id="btnPrev" onclick="playPrevChannel()">&lt; Prev</button>
-                <button class="nav-btn" id="btnNext" onclick="playNextChannel()">Next &gt;</button>
-            </div>
-        </div>
-        <div class="video-container">
-            <video id="videoPlayer" playsinline webkit-playsinline autoplay></video>
-        </div>
+        <video id="videoPlayer" playsinline webkit-playsinline autoplay controls></video>
     </div>
 
     <script>
@@ -234,28 +186,14 @@ https://asianetnews.vgcdn.net/vglive-sk-917600/playlist.m3u8
             currentChannelIndex = index;
             const channel = parsedChannels[currentChannelIndex];
 
+            // Add history state so native phone back key works out-of-the-box
+            history.pushState({ playing: true }, "");
+
             playerOverlay.classList.add('active');
 
             videoPlayer.src = channel.url;
             videoPlayer.load();
             videoPlayer.play().catch(e => console.log(e));
-
-            // Snap keyboard focus to Next button so D-Pad Center/OK immediately triggers Next
-            setTimeout(function() {
-                document.getElementById('btnNext').focus();
-            }, 100);
-        }
-
-        function playNextChannel() {
-            let nextIndex = currentChannelIndex + 1;
-            if (nextIndex >= parsedChannels.length) nextIndex = 0;
-            playChannel(nextIndex);
-        }
-
-        function playPrevChannel() {
-            let prevIndex = currentChannelIndex - 1;
-            if (prevIndex < 0) prevIndex = parsedChannels.length - 1;
-            playChannel(prevIndex);
         }
 
         function closePlayer() {
@@ -267,13 +205,24 @@ https://asianetnews.vgcdn.net/vglive-sk-917600/playlist.m3u8
             if (currentBtn) currentBtn.focus();
         }
 
-        // Global Key Fallback for Nokia Hardware Keys
+        // Handle native back key navigation (History API)
+        window.addEventListener('popstate', function() {
+            if (playerOverlay.classList.contains('active')) {
+                closePlayer();
+            }
+        });
+
+        // Global key fallback for Nokia Back/Clear keycodes
         window.addEventListener('keydown', function(e) {
             if (!playerOverlay.classList.contains('active')) return;
 
-            // Backspace / Escape -> Close Player
-            if (e.key === "Backspace" || e.key === "Escape" || e.keyCode === 8) {
-                closePlayer();
+            // KeyCodes covering Nokia Backspace, Escape, softkey back (8, 27, 461, 10009)
+            if (e.key === "Backspace" || e.key === "Escape" || e.keyCode === 8 || e.keyCode === 27 || e.keyCode === 461 || e.keyCode === 10009) {
+                if (history.state && history.state.playing) {
+                    history.back();
+                } else {
+                    closePlayer();
+                }
                 e.preventDefault();
             }
         }, true);
