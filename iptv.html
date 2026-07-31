@@ -1,0 +1,226 @@
+<!<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=240, height=320, initial-scale=1.0, user-scalable=no">
+    <title>Nokia IPTV</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: sans-serif;
+            font-size: 11px;
+        }
+
+        body {
+            width: 240px;
+            height: 320px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            height: 25px;
+            background-color: #111;
+            color: #00d2ff;
+            text-align: center;
+            line-height: 25px;
+            font-weight: bold;
+            border-bottom: 1px solid #222;
+        }
+
+        .channel-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            background-color: #050505;
+        }
+
+        .channel-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 8px 6px;
+            border: none;
+            border-bottom: 1px solid #1a1a1a;
+            background: #0f0f0f;
+            color: #ccc;
+            text-align: left;
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+
+        .channel-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 6px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .channel-item:focus, .channel-item:active {
+            background-color: #0055ff;
+            color: #ffffff;
+            font-weight: bold;
+            outline: none;
+        }
+
+        .player-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 320px;
+            height: 240px;
+            background: #000;
+            z-index: 9999;
+        }
+
+        .player-overlay.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        video {
+            width: 320px;
+            height: 240px;
+            object-fit: contain;
+            background-color: #000;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border: 1px solid #444;
+            padding: 2px 6px;
+            font-size: 9px;
+            border-radius: 3px;
+            z-index: 10000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">📺 IPTV Channels</div>
+    <div class="channel-list" id="channelContainer"></div>
+
+    <div class="player-overlay" id="playerOverlay">
+        <button class="back-btn" onclick="closePlayer()">[x] Back</button>
+        <video id="videoPlayer" controls autoplay playsinline></video>
+    </div>
+
+    <script>
+        const embeddedM3U = `
+#EXTM3U
+#EXTINF:-1 tvg-name="Sample 1" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/kappa-tv-in.png", Kappa TV
+https://cdn-3.pishow.tv/live/1123/master.m3u8
+#EXTINF:-1 tvg-name="Sample 2" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/dd-sports-in.png", DD Sports
+https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/b17adfe543354fdd8d189b110617cddd/index.m3u8
+#EXTINF:-1 tvg-name="Sample 2" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/mazhavil-manorama-in.png", Mazhavi Manorama HD
+https://cdn-7.pishow.tv/live/1129/master.m3u8  
+#EXTINF:-1 tvg-name="Sample 2" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/kairali-we-in.png", Kairali WE
+https://cdn-3.pishow.tv/live/1530/master.m3u8
+`;
+
+        const videoPlayer = document.getElementById('videoPlayer');
+        const playerOverlay = document.getElementById('playerOverlay');
+        const channelContainer = document.getElementById('channelContainer');
+
+        function parseM3U(data) {
+            const lines = data.split('\n');
+            const channels = [];
+            let currentName = '';
+            let currentLogo = '';
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+
+                if (line.startsWith('#EXTINF:')) {
+                    const logoMatch = line.match(/tvg-logo="([^"]+)"/i);
+                    currentLogo = logoMatch ? logoMatch[1] : '';
+
+                    const commaIndex = line.lastIndexOf(',');
+                    currentName = (commaIndex !== -1) ? line.substring(commaIndex + 1).trim() : 'Channel ' + (channels.length + 1);
+                } else if (line.length > 0 && !line.startsWith('#')) {
+                    channels.push({
+                        name: currentName || 'Channel ' + (channels.length + 1),
+                        logo: currentLogo,
+                        url: line
+                    });
+                    currentName = '';
+                    currentLogo = '';
+                }
+            }
+            return channels;
+        }
+
+        function renderPlaylist(channels) {
+            channelContainer.innerHTML = '';
+            channels.forEach((channel, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'channel-item';
+                btn.tabIndex = index + 1;
+
+                const imgHtml = channel.logo ? `<img class="channel-icon" src="${channel.logo}" onerror="this.style.display='none'">` : '';
+                btn.innerHTML = `${imgHtml}<span>${index + 1}. ${channel.name}</span>`;
+
+                btn.onclick = function() {
+                    playChannel(channel.url);
+                };
+
+                channelContainer.appendChild(btn);
+            });
+
+            const firstItem = channelContainer.querySelector('.channel-item');
+            if (firstItem) firstItem.focus();
+        }
+
+        function playChannel(url) {
+            playerOverlay.classList.add('active');
+            videoPlayer.src = url;
+            videoPlayer.load();
+
+            if (videoPlayer.requestFullscreen) {
+                videoPlayer.requestFullscreen().catch(e => console.log(e));
+            } else if (videoPlayer.webkitRequestFullscreen) {
+                videoPlayer.webkitRequestFullscreen();
+            }
+
+            videoPlayer.play().catch(e => console.log(e));
+        }
+
+        function closePlayer() {
+            videoPlayer.pause();
+            videoPlayer.src = "";
+            playerOverlay.classList.remove('active');
+
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(e => console.log(e));
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === "Backspace" || e.key === "Escape" || e.keyCode === 8) {
+                if (playerOverlay.classList.contains('active')) {
+                    closePlayer();
+                    e.preventDefault();
+                }
+            }
+        });
+
+        const parsedChannels = parseM3U(embeddedM3U);
+        renderPlaylist(parsedChannels);
+    </script>
+</body>
+</html>
