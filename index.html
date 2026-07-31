@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+i<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -80,6 +80,7 @@
             height: 320px;
             background: #000;
             z-index: 9999;
+            outline: none;
         }
 
         .player-overlay.active {
@@ -94,6 +95,7 @@
             height: 320px;
             object-fit: contain;
             background-color: #000;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -102,8 +104,8 @@
     <div class="header">📺 IPTV Channels</div>
     <div class="channel-list" id="channelContainer"></div>
 
-    <div class="player-overlay" id="playerOverlay">
-        <video id="videoPlayer" controls autoplay playsinline></video>
+    <div class="player-overlay" id="playerOverlay" tabindex="0">
+        <video id="videoPlayer" autoplay playsinline></video>
     </div>
 
     <script>
@@ -186,25 +188,22 @@ https://asianetnews.vgcdn.net/vglive-sk-917600/playlist.m3u8
             const channel = parsedChannels[currentChannelIndex];
 
             playerOverlay.classList.add('active');
+            playerOverlay.focus(); // Force keyboard focus onto overlay container
+
             videoPlayer.src = channel.url;
             videoPlayer.load();
-
             videoPlayer.play().catch(e => console.log(e));
         }
 
         function playNextChannel() {
             let nextIndex = currentChannelIndex + 1;
-            if (nextIndex >= parsedChannels.length) {
-                nextIndex = 0; // Loop back to first channel
-            }
+            if (nextIndex >= parsedChannels.length) nextIndex = 0;
             playChannel(nextIndex);
         }
 
         function playPrevChannel() {
             let prevIndex = currentChannelIndex - 1;
-            if (prevIndex < 0) {
-                prevIndex = parsedChannels.length - 1; // Loop to last channel
-            }
+            if (prevIndex < 0) prevIndex = parsedChannels.length - 1;
             playChannel(prevIndex);
         }
 
@@ -213,40 +212,43 @@ https://asianetnews.vgcdn.net/vglive-sk-917600/playlist.m3u8
             videoPlayer.src = "";
             playerOverlay.classList.remove('active');
 
-            if (document.exitFullscreen) {
-                document.exitFullscreen().catch(e => console.log(e));
-            }
+            // Refocus current channel button in list
+            const currentBtn = channelContainer.children[currentChannelIndex];
+            if (currentBtn) currentBtn.focus();
         }
 
-        // Key Listener for hidden key controls
-        document.addEventListener('keydown', function(e) {
-            if (playerOverlay.classList.contains('active')) {
-                // Right Arrow Key -> Next Channel
-                if (e.key === "ArrowRight" || e.keyCode === 39) {
-                    playNextChannel();
-                    e.preventDefault();
-                }
-                // Left Arrow Key -> Previous Channel
-                else if (e.key === "ArrowLeft" || e.keyCode === 37) {
-                    playPrevChannel();
-                    e.preventDefault();
-                }
-                // Backspace or Escape -> Close Video Player
-                else if (e.key === "Backspace" || e.key === "Escape" || e.keyCode === 8) {
-                    closePlayer();
-                    e.preventDefault();
-                }
-                // Center / OK / Enter Key -> Toggle Play / Pause
-                else if (e.key === "Enter" || e.keyCode === 13) {
-                    if (videoPlayer.paused) {
-                        videoPlayer.play();
-                    } else {
-                        videoPlayer.pause();
-                    }
-                    e.preventDefault();
-                }
+        // Keyboard handler supporting D-Pad + Number Keypad
+        window.addEventListener('keydown', function(e) {
+            if (!playerOverlay.classList.contains('active')) return;
+
+            const key = e.key;
+            const code = e.keyCode;
+
+            // RIGHT ARROW OR KEY '6' -> NEXT CHANNEL
+            if (key === "ArrowRight" || code === 39 || key === "6" || code === 54) {
+                playNextChannel();
+                e.preventDefault();
             }
-        });
+            // LEFT ARROW OR KEY '4' -> PREVIOUS CHANNEL
+            else if (key === "ArrowLeft" || code === 37 || key === "4" || code === 52) {
+                playPrevChannel();
+                e.preventDefault();
+            }
+            // OK / CENTER / ENTER OR KEY '5' -> PLAY/PAUSE
+            else if (key === "Enter" || code === 13 || key === "5" || code === 53) {
+                if (videoPlayer.paused) {
+                    videoPlayer.play();
+                } else {
+                    videoPlayer.pause();
+                }
+                e.preventDefault();
+            }
+            // BACKSPACE / ESCAPE OR KEY '0' -> EXIT
+            else if (key === "Backspace" || key === "Escape" || code === 8 || key === "0" || code === 48) {
+                closePlayer();
+                e.preventDefault();
+            }
+        }, true);
 
         parsedChannels = parseM3U(embeddedM3U);
         renderPlaylist(parsedChannels);
