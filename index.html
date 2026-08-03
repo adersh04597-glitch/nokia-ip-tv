@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=240, height=320, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nokia IPTV</title>
+    <title>Modern Nokia IPTV</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background-color: #000;
-            color: #fff;
-            font-family: sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             font-size: 11px;
         }
 
@@ -28,51 +28,78 @@
         }
 
         .header {
-            height: 25px;
-            background-color: #111;
-            color: #00d2ff;
+            height: 30px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: #38bdf8;
             text-align: center;
-            line-height: 25px;
-            font-weight: bold;
-            border-bottom: 1px solid #222;
+            line-height: 30px;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            z-index: 10;
         }
 
         .channel-list {
             flex-grow: 1;
             overflow-y: auto;
-            background-color: #050505;
+            padding: 4px;
+            scroll-behavior: smooth;
+        }
+
+        .channel-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        .channel-list::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 2px;
         }
 
         .channel-item {
             display: flex;
             align-items: center;
             width: 100%;
-            padding: 8px 6px;
-            border: none;
-            border-bottom: 1px solid #1a1a1a;
-            background: #0f0f0f;
-            color: #ccc;
+            padding: 7px 8px;
+            margin-bottom: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 6px;
+            background: #111827;
+            color: #94a3b8;
             text-align: left;
             font-size: 11px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             cursor: pointer;
+            transition: all 0.15s ease;
         }
 
         .channel-icon {
-            width: 18px;
-            height: 18px;
-            margin-right: 6px;
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
             object-fit: contain;
             flex-shrink: 0;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1px;
+        }
+
+        .channel-item span {
+            background: transparent;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .channel-item:focus, .channel-item:active {
-            background-color: #0055ff;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            border-color: #38bdf8;
             color: #ffffff;
-            font-weight: bold;
+            font-weight: 600;
             outline: none;
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+            transform: scale(0.99);
         }
 
         .player-overlay {
@@ -87,41 +114,120 @@
         }
 
         .player-overlay.active {
-            display: block;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-container {
+            position: relative;
+            width: 240px;
+            height: 320px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         video {
-            width: 240px;
-            height: 320px;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
             background-color: #000;
+        }
+
+        /* Custom Modern Overlay Controls Layered Over Video */
+        .player-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
+            padding: 10px 8px 8px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        .player-controls.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .channel-title-bar {
+            font-size: 10px;
+            color: #38bdf8;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background: transparent;
+        }
+
+        .controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: transparent;
+        }
+
+        .ctrl-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .ctrl-btn:focus, .ctrl-btn:active {
+            background: #0284c7;
+            border-color: #38bdf8;
+        }
+
+        .status-indicator {
+            font-size: 9px;
+            color: #94a3b8;
+            background: transparent;
         }
     </style>
 </head>
 <body>
 
-    <div class="header">📺 IPTV Channels</div>
+    <div class="header">⚡ IPTV Stream</div>
     <div class="channel-list" id="channelContainer"></div>
 
     <div class="player-overlay" id="playerOverlay">
-        <video id="videoPlayer" playsinline webkit-playsinline autoplay controls></video>
+        <div class="video-container" id="videoContainer">
+            <video id="videoPlayer" playsinline webkit-playsinline autoplay></video>
+            
+            <div class="player-controls" id="playerControls">
+                <div class="channel-title-bar" id="currentChannelTitle">Channel Name</div>
+                <div class="controls-row">
+                    <button class="ctrl-btn" id="prevBtn">⏮ Prev</button>
+                    <span class="status-indicator" id="playStatus">LIVE</span>
+                    <button class="ctrl-btn" id="nextBtn">Next ⏭</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         const embeddedM3U = `
-
 #EXTM3U
 #EXTINF:-1 tvg-name="Asianet News" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/asianet-news-in.png", Asianet News
 https://asianetnews.vgcdn.net/vglive-sk-917600/playlist.m3u8
- #EXTINF:-1 tvg-id="AmritaTV.in@SD" tvg-logo="https://i.imgur.com/WdSjlPl.png" group-title="Entertainment",Amrita TV (720p)
+#EXTINF:-1 tvg-id="AmritaTV.in@SD" tvg-logo="https://i.imgur.com/WdSjlPl.png" group-title="Entertainment",Amrita TV (720p)
 https://ddash74r36xqp.cloudfront.net/master.m3u8
-  #EXTINF:-1 tvg-id="JeevanTV.in@SD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/Jeevan_TV.png" group-title="General",Jeevan TV (576p)
+#EXTINF:-1 tvg-id="JeevanTV.in@SD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/Jeevan_TV.png" group-title="General",Jeevan TV (576p)
 https://cdn-3.pishow.tv/live/1467/master.m3u8
 #EXTINF:-1 tvg-name="DD National" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/dd-national-in.png", DD National
 https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/40492a64c1db4a1385ba1a397d357d3a/index.m3u8
 #EXTINF:-1 tvg-name="DD Sports" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/india/dd-sports-in.png", DD Sports
 https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/b17adfe543354fdd8d189b110617cddd/index.m3u8
-
 #EXTINF:-1 tvg-id="SansadTV1.in@HD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_SANSAD_TV_SYMHYP_1_HD/images/LOGO_HD/LOGO_HD_image.png" group-title="Legislative",Sansad TV 1 HD (1080p)
 https://d2lk5u59tns74c.cloudfront.net/out/v1/fff8f20221d5456e8922e689d71dedc3/index.m3u8
 #EXTINF:-1 tvg-id="SansadTV2.in@HD" tvg-logo="https://dtil.tmsimg.com/assets/s143761_ld_h15_aa.png?lock=720x540" group-title="Legislative",Sansad TV 2 (1080p)
@@ -138,7 +244,7 @@ https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/0811cd8c37ca4c409d5385a6cd2fa18b/in
 https://vg-zeefta.akamaized.net/ptnr-yupptv/title-wion/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/20c3c0d9-0256-43fe-bca6-70fdd490b957/main.m3u8
 #EXTINF:-1 tvg-id="9XM.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_9XM/images/LOGO_HD/image.png" group-title="Music",9XM (1080p)
 https://9xjio.wiseplayout.com/9XM/master.m3u8
- #EXTINF:-1 tvg-id="MediaOne.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_MEDIA_ONE/images/LOGO_HD/image.png" group-title="News",Media One (720p)
+#EXTINF:-1 tvg-id="MediaOne.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_MEDIA_ONE/images/LOGO_HD/image.png" group-title="News",Media One (720p)
 https://cdn-3.pishow.tv/live/1481/master.m3u8 
 #EXTINF:-1 tvg-id="MalabarNews.in@SD" tvg-logo="https://i.imgur.com/Un2gxt4.png" group-title="News",Malabar News (720p)
 http://cloud.logichost.in:1935/live/malabarnews/index.m3u8
@@ -154,19 +260,14 @@ https://mumt01.tangotv.in/O5aw8Zn3KAIRALI/index.m3u8
 https://cdn-3.pishow.tv/live/1530/master.m3u8
 #EXTINF:-1 tvg-id="KalikaTV.in@SD" tvg-logo="https://i.imgur.com/XWXFoJA.png" group-title="Music",Kalika TV (576p)
 http://server.applelive.in/kalikatv/kalikatv.m3u8
-  #EXTINF:-1 tvg-id="KannurVision.in@SD" tvg-logo="https://i.imgur.com/FCXqPer.png" group-title="News",Kannur Vision (1080p)
+#EXTINF:-1 tvg-id="KannurVision.in@SD" tvg-logo="https://i.imgur.com/FCXqPer.png" group-title="News",Kannur Vision (1080p)
 https://stream.logichost.in/kannurvision/live/playlist.m3u8
-  #EXTINF:-1 tvg-id="MusicIndia.in@SD" tvg-logo="https://dtil.tmsimg.com/assets/s143563_ld_h15_aa.png?lock=720x540" group-title="Music",Music India (720p) [Not 24/7]
+#EXTINF:-1 tvg-id="MusicIndia.in@SD" tvg-logo="https://dtil.tmsimg.com/assets/s143563_ld_h15_aa.png?lock=720x540" group-title="Music",Music India (720p) [Not 24/7]
 https://cdn-2.pishow.tv/live/226/master.m3u8
-  
-#EXTM3U x-tvg-url="https://raw.githubusercontent.com/StrangeDrVN/epg/public/guide.xml.gz"
 #EXTINF:-1 tvg-id="24News.in@SD" tvg-logo="https://sund-images.sunnxt.com/202222/300x300_24News_202222_d63feca0-79ae-47ea-b75a-66c17d456f4c.png" group-title="News",24 News (576p)
 https://mumt07.tangotv.in/zHjX9OFlTWENTYFOURNEWS/index.m3u8
-#EXTINF:-1 tvg-id="AmritaTV.in@SD" tvg-logo="https://i.imgur.com/WdSjlPl.png" group-title="Entertainment",Amrita TV (720p)
-https://ddash74r36xqp.cloudfront.net/master.m3u8
 #EXTINF:-1 tvg-id="AnandTV.uk@SD" tvg-logo="https://i.imgur.com/5VOPFzs.png" group-title="General",Anand TV (720p) [Not 24/7]
 https://live-anandtv.anandmedia.net/anandtvapp/anandtv/index.m3u8
-
 #EXTINF:-1 tvg-id="AsianetMiddleEast.in@SD" tvg-logo="https://i.imgur.com/du9iZ0s.png" group-title="Entertainment",Asianet Middle East (576p)
 https://mumt03.tangotv.in/Dsly5z3HASIANETMIDDLEEAST/index.m3u8
 #EXTINF:-1 tvg-id="BigTV24x7.in@SD" tvg-logo="https://i.postimg.cc/rpHrRxR5/big_tv_malayalam.png" group-title="News",Big TV 24x7 (576i)
@@ -177,7 +278,6 @@ https://2-fss-2.streamhoster.com/pl_120/206508-3261972-1/playlist.m3u8
 https://5a1178b42cc03.streamlock.net/8212/8212/playlist.m3u8
 #EXTINF:-1 tvg-id="DDMalayalam.in@SD" tvg-logo="https://i.postimg.cc/BZjmjJJs/DD-Malayalam.png" group-title="Entertainment",DD Malayalam (504p)
 https://d2lk5u59tns74c.cloudfront.net/out/v1/c313674ffced4c9a90f1bba436df2b9b/index.m3u8
-
 #EXTINF:-1 tvg-id="FlowersTVUSA.us@SD" tvg-logo="https://upload.wikimedia.org/wikipedia/ml/1/1c/Flowers-Onam.png" group-title="Culture",Flowers TV USA
 https://yuppmedtaorire.akamaized.net/v1/master/a0d007312bfd99c47f76b77ae26b1ccdaae76cb1/flowers_nim_https/050522/flowers/playlist.m3u8
 #EXTINF:-1 tvg-id="GarshomTV.uk@SD" tvg-logo="https://i.imgur.com/KnbwUyb.png" group-title="Culture",Garshom TV (360p) [Not 24/7]
@@ -194,20 +294,6 @@ https://yuppnimrestreammum.akamaized.net/260723/smil:jaihind1.smil/playlist.m3u8
 https://yuppmedtaorire.akamaized.net/v1/master/a0d007312bfd99c47f76b77ae26b1ccdaae76cb1/janamtv_nim_https/140622/janamtv/playlist.m3u8
 #EXTINF:-1 tvg-id="JanapriyamTV.in@SD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/Janapriyam_News.png" group-title="Entertainment",Janapriyam TV (480p)
 http://103.72.101.252:8080/live/1455.m3u8
-#EXTINF:-1 tvg-id="JeevanTV.in@SD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/Jeevan_TV.png" group-title="General",Jeevan TV (576p)
-https://cdn-3.pishow.tv/live/1467/master.m3u8
-#EXTINF:-1 tvg-id="KairaliArabia.in@SD" tvg-logo="https://i.imgur.com/BBEfplL.png" group-title="General",Kairali Arabia (576p)
-https://mumt03.tangotv.in/Dsly5z3HKAIRALIARABIA/index.m3u8
-#EXTINF:-1 tvg-id="KairaliNews.in@SD" tvg-logo="https://dtil.tmsimg.com/assets/s143246_ld_h15_aa.png?lock=720x540" group-title="News",Kairali News (720p)
-https://cdn-3.pishow.tv/live/1469/master.m3u8
-#EXTINF:-1 tvg-id="KairaliTV.in@SD" tvg-logo="https://upload.wikimedia.org/wikipedia/en/thumb/6/6e/Kairali_TV.svg/500px-Kairali_TV.svg.png" group-title="General",Kairali TV (576p)
-https://mumt01.tangotv.in/O5aw8Zn3KAIRALI/index.m3u8
-#EXTINF:-1 tvg-id="KairaliWe.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_KAIRALI_WE/images/LOGO_HD/image.png" group-title="Movies",Kairali We (576p)
-https://cdn-3.pishow.tv/live/1530/master.m3u8
-#EXTINF:-1 tvg-id="KalikaTV.in@SD" tvg-logo="https://i.imgur.com/XWXFoJA.png" group-title="Music",Kalika TV (576p)
-http://server.applelive.in/kalikatv/kalikatv.m3u8
-#EXTINF:-1 tvg-id="KannurVision.in@SD" tvg-logo="https://i.imgur.com/FCXqPer.png" group-title="News",Kannur Vision (1080p)
-https://stream.logichost.in/kannurvision/live/playlist.m3u8
 #EXTINF:-1 tvg-id="KappaTV.in@SD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/Kappa_TV.png" group-title="Lifestyle",Kappa TV (576p)
 https://cdn-3.pishow.tv/live/1123/master.m3u8
 #EXTINF:-1 tvg-id="KCLTV.in@SD" tvg-logo="https://i.imgur.com/bkp9dIm.png" group-title="Entertainment",KCL TV (720p)
@@ -218,8 +304,6 @@ https://932y4x26ljv8-hls-live.5centscdn.com/victers/tv.stream/playlist.m3u8
 http://rtmp2.logicwebs.in:1935/msign/msignmedia/playlist.m3u8
 #EXTINF:-1 tvg-id="MagnavisionTV.uk@SD" tvg-logo="https://i.imgur.com/mUHixbi.png" group-title="Entertainment",Magna Vision (1080p)
 https://j78dpa3edq5r-hls-live.5centscdn.com/abr/0864028584026e6ad9cdf922473177a4/playlist.m3u8
-#EXTINF:-1 tvg-id="MalabarNews.in@SD" tvg-logo="https://i.imgur.com/Un2gxt4.png" group-title="News",Malabar News (720p)
-http://cloud.logichost.in:1935/live/malabarnews/index.m3u8
 #EXTINF:-1 tvg-id="ManoramaNews.in@SD" tvg-logo="https://i.imgur.com/adjRrVx.png" group-title="News",Manorama News (1080p)
 https://mmtvnews1.akamaized.net/v1/master/673630b269b766886555eebfddd4f27f3de3ab50/mmtvNewsCampaign1/index.m3u8
 #EXTINF:-1 tvg-id="MathrubhumiNews.in@SD" tvg-logo="https://i.imgur.com/diQftzP.png" group-title="News",Mathrubhumi News (576p) [Not 24/7]
@@ -230,8 +314,6 @@ http://131.153.22.8:1935/MAYYAZHI/live/playlist.m3u8
 https://yuppmedtaorire.akamaized.net/v1/master/a0d007312bfd99c47f76b77ae26b1ccdaae76cb1/mazhavilmanorama_nim_https/050522/mazhavilmanorama/playlist.m3u8
 #EXTINF:-1 tvg-id="MazhavilManorama.in@HD" tvg-logo="https://i.imgur.com/fjgzW20.png" group-title="Entertainment",Mazhavil Manorama HD (1080p)
 https://cdn-7.pishow.tv/live/1129/master.m3u8
-#EXTINF:-1 tvg-id="MediaOne.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_MEDIA_ONE/images/LOGO_HD/image.png" group-title="News",Media One (720p)
-https://cdn-3.pishow.tv/live/1481/master.m3u8
 #EXTINF:-1 tvg-id="meWATCHLIVE1.sg@SD" tvg-logo="https://i.imgur.com/ppxUDxB.png" group-title="Entertainment",meWATCH LIVE 1 (1080p)
 https://tglmp04.akamaized.net/out/v1/898b1cbac7c747e3b1f3deb460e9b67e/manifest.mpd
 #EXTINF:-1 tvg-id="MTA7Asia.uk@SD" tvg-logo="https://i.imgur.com/3Nl8Tpu.png" group-title="Religious",MTA7 Asia (1080p)
@@ -240,8 +322,6 @@ https://livemtaasia.akamaized.net/hls/live/2039224/mtaasia2/playlist.m3u8
 http://149.71.34.166:8002/play/a013/index.m3u8
 #EXTINF:-1 tvg-id="NationalGeographicWild.in@HD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NAT_GEO_WILD/images/LOGO_HD/image.png" group-title="Documentary",National Geographic Wild HD (1080p)
 http://149.71.34.166:8002/play/a012/index.m3u8
-#EXTINF:-1 tvg-id="News18Kerala.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NEWS18_KERALA/images/LOGO_HD/image.png" group-title="News",News18 Kerala (1080p)
-https://n18syndication.akamaized.net/bpk-tv/News18_Kerala_NW18_MOB/output01/master.m3u8
 #EXTINF:-1 tvg-id="NewsMalayalam24x7.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NEWS_MALAYALAM_24X7/images/LOGO_HD/image.png" group-title="News",News Malayalam 24x7 (576p)
 https://cdn-3.pishow.tv/live/1629/master.m3u8
 #EXTINF:-1 tvg-id="NTV7.my@SD" tvg-logo="https://i.imgur.com/jDWR3xI.png" group-title="General",NTV7
@@ -254,15 +334,8 @@ https://m6gdavepdn93-hls-live.5centscdn.com/pravasi/d0dbe915091d400bd8ee7f27f079
 https://bk7l298nyx53-hls-live.5centscdn.com/realnews/e7dee419f91aa9e65939d3677fb9c4f5.sdp/playlist.m3u8
 #EXTINF:-1 tvg-id="ReporterTV.in@SD" tvg-logo="https://dtil.tmsimg.com/assets/s85096_ld_h15_aa.png?lock=720x540" group-title="News",Reporter TV (576p)
 https://segment.yuppcdn.net/050522/reporter/playlist.m3u8
-#EXTINF:-1 tvg-id="RTMParlimenDewanNegara.my@SD" tvg-logo="https://i.postimg.cc/mgrVsTMY/header.png" http-referrer="https://rtm-player.glueapi.io/" group-title="Legislative",RTM Parlimen (Dewan Negara) [Geo-blocked]
-#EXTVLCOPT:http-referrer=https://rtm-player.glueapi.io/
-https://d25tgymtnqzu8s.cloudfront.net/smil:negara/playlist.m3u8?id=8
-#EXTINF:-1 tvg-id="RTMParlimenDewanRakyat.my@SD" tvg-logo="https://i.postimg.cc/mgrVsTMY/header.png" http-referrer="https://rtm-player.glueapi.io/" group-title="Legislative",RTM Parlimen (Dewan Rakyat) [Geo-blocked]
-#EXTVLCOPT:http-referrer=https://rtm-player.glueapi.io/
-https://d25tgymtnqzu8s.cloudfront.net/smil:rakyat/playlist.m3u8?id=7
 #EXTINF:-1 tvg-id="SafariTV.in@SD" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_SAFARI_TV/images/LOGO_HD/image.png" group-title="Documentary",Safari TV (480p) [Not 24/7]
 https://j78dp346yq5r-hls-live.5centscdn.com/safari/live.stream/playlist.m3u8
-
 #EXTINF:-1 tvg-id="ShekinahTV.in@SD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/Shekinah.png" group-title="Undefined",Shekinah TV (1080p)
 https://livetv.timeiptv.in/ShekinahNewsIndia/955ad3298db330b5ee880c2c9e6f23a0.sdp/playlist.m3u8
 #EXTINF:-1 tvg-id="StarSportsSelect1.in@HD" tvg-logo="https://i.imgur.com/Mh9tKPx.png" group-title="Sports",Star Sports Select 1 HD (720p)
@@ -277,19 +350,21 @@ http://rtmp.logichost.in:1935/timevision/timevision/playlist.m3u8
 https://5a1178b42cc03.streamlock.net/8210/8210/playlist.m3u8
 #EXTINF:-1 tvg-id="WayanadVision.in@SD" tvg-logo="https://i.imgur.com/yF2C4Dt.png" group-title="General",Wayanad Vision (1080p)
 https://cloudsavre.in.net/hls/stream.m3u8
-#EXTINF:-1 tvg-id="WeOneKerala.in@SD" tvg-logo="https://i.imgur.com/iZufxya.jpg" group-title="General",We One Kerala (720p) [Geo-blocked]
-http://kl.logicwebs.in:1935/sreemedia/sreemedia/playlist.m3u8
 #EXTINF:-1 tvg-id="ZeeMalayalamNews.in@SD" tvg-logo="https://english.cdn.zeenews.com/images/logo/zee-malayalam-17.svg" group-title="News",Zee Malayalam News (720p)
 https://d1ty2af03alkwd.cloudfront.net/index_4.m3u8
- 
-`;
+        `;
 
         const videoPlayer = document.getElementById('videoPlayer');
         const playerOverlay = document.getElementById('playerOverlay');
         const channelContainer = document.getElementById('channelContainer');
+        const playerControls = document.getElementById('playerControls');
+        const currentChannelTitle = document.getElementById('currentChannelTitle');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
 
         let parsedChannels = [];
         let currentChannelIndex = 0;
+        let controlsTimeout = null;
 
         function parseM3U(data) {
             const lines = data.split('\n');
@@ -346,37 +421,84 @@ https://d1ty2af03alkwd.cloudfront.net/index_4.m3u8
             currentChannelIndex = index;
             const channel = parsedChannels[currentChannelIndex];
 
-            // Add history state so native phone back key works out-of-the-box
-            history.pushState({ playing: true }, "");
+            currentChannelTitle.textContent = `${currentChannelIndex + 1}. ${channel.name}`;
 
+            history.pushState({ playing: true }, "");
             playerOverlay.classList.add('active');
 
             videoPlayer.src = channel.url;
             videoPlayer.load();
             videoPlayer.play().catch(e => console.log(e));
+
+            showControlsTemporarily();
+        }
+
+        function showControlsTemporarily() {
+            playerControls.classList.remove('hidden');
+            clearTimeout(controlsTimeout);
+            controlsTimeout = setTimeout(() => {
+                if (playerOverlay.classList.contains('active')) {
+                    playerControls.classList.add('hidden');
+                }
+            }, 3500);
         }
 
         function closePlayer() {
             videoPlayer.pause();
             videoPlayer.src = "";
             playerOverlay.classList.remove('active');
+            clearTimeout(controlsTimeout);
 
             const currentBtn = channelContainer.children[currentChannelIndex];
             if (currentBtn) currentBtn.focus();
         }
 
-        // Handle native back key navigation (History API)
+        prevBtn.onclick = function(e) {
+            e.stopPropagation();
+            let newIndex = currentChannelIndex - 1;
+            if (newIndex < 0) newIndex = parsedChannels.length - 1;
+            playChannel(newIndex);
+        };
+
+        nextBtn.onclick = function(e) {
+            e.stopPropagation();
+            let newIndex = currentChannelIndex + 1;
+            if (newIndex >= parsedChannels.length) newIndex = 0;
+            playChannel(newIndex);
+        };
+
+        videoPlayer.onclick = function() {
+            if (playerControls.classList.contains('hidden')) {
+                showControlsTemporarily();
+            } else {
+                playerControls.classList.add('hidden');
+            }
+        };
+
         window.addEventListener('popstate', function() {
             if (playerOverlay.classList.contains('active')) {
                 closePlayer();
             }
         });
 
-        // Global key fallback for Nokia Back/Clear keycodes
         window.addEventListener('keydown', function(e) {
             if (!playerOverlay.classList.contains('active')) return;
 
-            // KeyCodes covering Nokia Backspace, Escape, softkey back (8, 27, 461, 10009)
+            // Handle D-Pad Left / Right or Channel Up / Down keys for zapping channels directly inside player
+            if (e.key === "ArrowRight" || e.key === "MediaTrackNext" || e.keyCode === 39) {
+                let newIndex = (currentChannelIndex + 1) % parsedChannels.length;
+                playChannel(newIndex);
+                e.preventDefault();
+                return;
+            }
+            if (e.key === "ArrowLeft" || e.key === "MediaTrackPrevious" || e.keyCode === 37) {
+                let newIndex = (currentChannelIndex - 1 + parsedChannels.length) % parsedChannels.length;
+                playChannel(newIndex);
+                e.preventDefault();
+                return;
+            }
+
+            // Close player on Back / Escape
             if (e.key === "Backspace" || e.key === "Escape" || e.keyCode === 8 || e.keyCode === 27 || e.keyCode === 461 || e.keyCode === 10009) {
                 if (history.state && history.state.playing) {
                     history.back();
